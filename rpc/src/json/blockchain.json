@@ -1,0 +1,53 @@
+{
+  "blocks": [
+    {
+      "index": 0,
+      "timestamp": "2025-04-04 14:14:48.7790024 +0700 +07 m=+0.007808901",
+      "transactions": "Genesis Block",
+      "prev_hash": "",
+      "nonce": 0,
+      "hash": ""
+    },
+    {
+      "index": 1,
+      "timestamp": "2025-04-04 14:14:53.9245852 +0700 +07 m=+5.153391701",
+      "transactions": "Miner Reward",
+      "prev_hash": "",
+      "nonce": 247,
+      "hash": "0001ff4d2ecc3ffc056af2680300ea2a3bab17c4c126b968a1db412a1e8e6721"
+    },
+    {
+      "index": 2,
+      "timestamp": "2025-04-04 14:24:24.2865836 +0700 +07 m=+6.993410401",
+      "transactions": "Miner Reward",
+      "prev_hash": "0001ff4d2ecc3ffc056af2680300ea2a3bab17c4c126b968a1db412a1e8e6721",
+      "nonce": 112,
+      "hash": "00d0f55480d1b0bf2d6af58bd09a6a8404640d6441ce8ab1680774b59b325a91"
+    },
+    {
+      "index": 3,
+      "timestamp": "2025-04-04 14:24:54.5530366 +0700 +07 m=+9.398213001",
+      "transactions": "Miner Reward",
+      "prev_hash": "00d0f55480d1b0bf2d6af58bd09a6a8404640d6441ce8ab1680774b59b325a91",
+      "nonce": 82,
+      "hash": "0003f064c53ccd54bf7dc660a45e5f5df7f3b56f401871e631b6da4256131e9c"
+    },
+    {
+      "index": 4,
+      "timestamp": "2025-04-04 14:27:14.4646394 +0700 +07 m=+5.549535601",
+      "transactions": "Miner Reward",
+      "prev_hash": "0003f064c53ccd54bf7dc660a45e5f5df7f3b56f401871e631b6da4256131e9c",
+      "nonce": 128,
+      "hash": "000d117186ed801c176097058bc9b3e75843b184060469ae0c5ed6b7bb623ea6"
+    },
+    {
+      "index": 5,
+      "timestamp": "2025-04-04 15:30:12.2111294 +0700 +07 m=+109.888681001",
+      "transactions": "Miner Reward",
+      "prev_hash": "000d117186ed801c176097058bc9b3e75843b184060469ae0c5ed6b7bb623ea6",
+      "nonce": 443,
+      "hash": "009942b5544f9f5468ea907c9d2fb2421e14c5743cb19cbcc29d94dcb5b60cf2"
+    }
+  ],
+  "Mux": {}
+}
