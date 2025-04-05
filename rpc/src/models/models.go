@@ -1,7 +1,6 @@
 package models
 
 import (
-	"crypto/ecdsa"
 	"sync"
 )
 
@@ -20,14 +19,27 @@ type Blockchain struct {
 }
 
 type Wallet struct {
-	PrivateKey *ecdsa.PrivateKey
-	PublicKey  []byte
-	Address    string
+	PrivateKey string `json:"privateKey"`
+	PublicKeyX string `json:"publicKeyX"`
+	PublicKeyY string `json:"publicKeyY"`
+	Address    string `json:"address"`
+}
+type Receiver struct {
+	ReceiverPublicKeyX string `json:"privateKey"`
+	ReceiverPublicKeyY string `json:"publicKeyX"`
+}
+type Sender struct {
+	SenderPublicKeyY string `json:"privateKey"`
+	SenderPublicKeyX string `json:"publicKeyX"`
+	SenderPrivateKey string `json:"publicKeyY"`
 }
 
 type Transaction struct {
-	Sender    string
-	Receiver  string
-	Amount    int
-	Signature string
+	SenderPrivateKey   string
+	SenderPublicKeyX   string
+	SenderPublicKeyY   string
+	ReceiverPublicKeyX string
+	ReceiverPublicKeyY string
+	Amount             int
+	Signature          string
 }

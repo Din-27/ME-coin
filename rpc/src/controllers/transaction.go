@@ -8,97 +8,112 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"github.com/Din-27/blockchain/src/models"
+	"github.com/gin-gonic/gin"
 	"log"
 	"math/big"
-
-	"github.com/Din-27/blockchain/src/services"
-	"github.com/gin-gonic/gin"
 )
 
+func padTo32(b []byte) []byte {
+	if len(b) < 32 {
+		pad := make([]byte, 32-len(b))
+		return append(pad, b...)
+	}
+	return b
+}
+
 func decodePrivateKey(encodedPrivateKey string) (*ecdsa.PrivateKey, error) {
-	// Decode private key dari base64
 	decoded, err := base64.StdEncoding.DecodeString(encodedPrivateKey)
 	if err != nil {
 		return nil, err
 	}
 
-	// Membuat private key dari byte array decoded
-	privKey, _ := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	privKey.D = new(big.Int).SetBytes(decoded[:len(decoded)-1])
-	privKey.PublicKey.X = new(big.Int).SetBytes(decoded[len(decoded)-1:])
-	privKey.PublicKey.Y = new(big.Int).SetBytes(decoded[len(decoded)-1:])
+	// Buat PrivateKey
+	privKey := new(ecdsa.PrivateKey)
 	privKey.PublicKey.Curve = elliptic.P256()
+	privKey.D = new(big.Int).SetBytes(decoded)
+
+	// Generate PublicKey dari PrivateKey
+	privKey.PublicKey.X, privKey.PublicKey.Y = privKey.PublicKey.Curve.ScalarBaseMult(decoded)
 
 	return privKey, nil
 }
 
 func SignTransaction(privateKey *ecdsa.PrivateKey, txHash []byte) string {
-	// Menandatangani transaksi menggunakan private key
 	r, s, err := ecdsa.Sign(rand.Reader, privateKey, txHash)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Menggabungkan r dan s menjadi signature yang akan dikirim ke client
-	signature := append(r.Bytes(), s.Bytes()...)
+	signature := append(padTo32(r.Bytes()), padTo32(s.Bytes())...)
 	return hex.EncodeToString(signature)
 }
 
-func verifyTransactionSignature(publicKey []byte, txHash []byte, signature string) bool {
-	// Decode signature dari hex string
+func verifyTransactionSignature(pubKeyXHex, pubKeyYHex string, txHash []byte, signature string) bool {
+	// Decode signature
 	sig, err := hex.DecodeString(signature)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Failed to decode signature:", err)
 	}
 
-	// Membagi signature menjadi dua bagian: r dan s
-	r := new(big.Int).SetBytes(sig[:len(sig)/2])
-	s := new(big.Int).SetBytes(sig[len(sig)/2:])
+	if len(sig) != 64 {
+		log.Println("🚫 Signature length not 64 bytes, got:", len(sig))
+		return false
+	}
 
-	// Membagi public key menjadi bagian X dan Y
+	r := new(big.Int).SetBytes(sig[:32])
+	s := new(big.Int).SetBytes(sig[32:])
+
+	x := new(big.Int)
+	y := new(big.Int)
+	_, ok1 := x.SetString(pubKeyXHex, 16)
+	_, ok2 := y.SetString(pubKeyYHex, 16)
+
+	if !ok1 || !ok2 {
+		log.Println("🚫 Failed to parse public key X or Y")
+		return false
+	}
+
 	pubKey := ecdsa.PublicKey{
 		Curve: elliptic.P256(),
-		X:     new(big.Int).SetBytes(publicKey[:len(publicKey)/2]),
-		Y:     new(big.Int).SetBytes(publicKey[len(publicKey)/2:]),
+		X:     x,
+		Y:     y,
 	}
 
-	// Memverifikasi signature
-	return ecdsa.Verify(&pubKey, txHash, r, s)
+	fmt.Println("🔍 DEBUG: Verifying signature")
+	fmt.Println("txHash:", hex.EncodeToString(txHash))
+	fmt.Println("r:", r.String())
+	fmt.Println("s:", s.String())
+	fmt.Println("Public Key X:", pubKey.X.String())
+	fmt.Println("Public Key Y:", pubKey.Y.String())
+
+	result := ecdsa.Verify(&pubKey, txHash, r, s)
+	if !result {
+		fmt.Println("❌ Signature verification failed")
+	} else {
+		fmt.Println("✅ Signature verified!")
+	}
+	return result
 }
 
 func HandleSenderAmount(c *gin.Context) {
-	var tx services.Transaction
+	var tx models.Transaction
 	if err := c.ShouldBindJSON(&tx); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Membuat hash untuk transaksi
-	txHash := sha256.Sum256([]byte(fmt.Sprintf("%s%s%d", tx.Sender, tx.Receiver, tx.Amount)))
-
-	// Mendekode public key pengirim
-	senderPublicKey, err := hex.DecodeString(tx.Sender)
-	fmt.Println(tx.Sender)
-	if err != nil {
-		c.JSON(400, gin.H{"error": "Invalid sender public key"})
-		return
-	}
-
-	// Mendekode private key pengirim dari body
+	txHash := sha256.Sum256([]byte(fmt.Sprintf("%s%s%d", tx.SenderPublicKeyX, tx.SenderPublicKeyY, tx.Amount)))
 	decodedPrivateKey, err := decodePrivateKey(tx.SenderPrivateKey)
 	if err != nil {
 		c.JSON(400, gin.H{"error": "Invalid sender private key"})
 		return
 	}
 
-	// Menandatangani transaksi dengan private key pengirim
 	signature := SignTransaction(decodedPrivateKey, txHash[:])
-
-	// Menambahkan signature ke dalam transaksi
 	tx.Signature = signature
 
-	// Memverifikasi transaksi
-	if verifyTransactionSignature(senderPublicKey, txHash[:], signature) {
+	if verifyTransactionSignature(tx.SenderPublicKeyX, tx.SenderPublicKeyY, txHash[:], signature) {
 		c.JSON(200, gin.H{
 			"status":      "Transaction verified successfully!",
 			"transaction": tx,

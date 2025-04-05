@@ -16,12 +16,17 @@ func NewWallet() *models.Wallet {
 		log.Fatal(err)
 	}
 
-	publicKey := append(privateKey.PublicKey.X.Bytes(), privateKey.PublicKey.Y.Bytes()...)
+	xBytes := privateKey.PublicKey.X.Bytes()
+	yBytes := privateKey.PublicKey.Y.Bytes()
+
+	// Buat address dari gabungan X + Y public key
+	publicKey := append(xBytes, yBytes...)
 	address := generateAddress(publicKey)
 
 	return &models.Wallet{
-		PrivateKey: privateKey,
-		PublicKey:  publicKey,
+		PrivateKey: hex.EncodeToString(privateKey.D.Bytes()),
+		PublicKeyX: hex.EncodeToString(xBytes),
+		PublicKeyY: hex.EncodeToString(yBytes),
 		Address:    address,
 	}
 }
